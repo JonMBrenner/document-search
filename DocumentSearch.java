@@ -1,5 +1,6 @@
 import java.util.Scanner;
 import java.util.Set;
+import java.io.IOException;
 
 public class DocumentSearch {
 
@@ -8,7 +9,7 @@ public class DocumentSearch {
   private static String getSearchTerm(Scanner scanner) {
     System.out.print("Enter search term: ");
     String searchTerm = scanner.nextLine();
-    return searchTerm;
+    return SearchEngine.normalizeText(searchTerm);
   }
 
   private static int getSearchMode(Scanner scanner) {
@@ -29,7 +30,7 @@ public class DocumentSearch {
     return !"y".equalsIgnoreCase(response);
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     SearchEngine searchEngine = new SearchEngine();
     Scanner scanner = new Scanner(System.in);
     boolean exit = false;
