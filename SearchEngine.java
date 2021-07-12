@@ -62,23 +62,14 @@ public class SearchEngine {
     }
   }
 
-  private String getSearchIndexKey(String documentName, String word) {
+  private static String getSearchIndexKey(String documentName, String word) {
     return documentName + "-" + word;
   }
 
-  private Set<Integer> getWordOccurenceIndices(String documentName, String word) {
+  private Set<Integer> getWordIndices(String documentName, String word) {
     String key = getSearchIndexKey(documentName, word);
-    Set<Integer> wordOccurenceIndices = searchIndex.get(key);
-    return wordOccurenceIndices != null ? wordOccurenceIndices : new HashSet<>();
-  }
-
-  public static String normalizeText(String text) {
-    text = text.toLowerCase();
-    text = text.replaceAll("[’']s", "");
-    text = text.replaceAll("[’']", "");
-    text = text.replaceAll("[^a-z0-9]+", " ");
-    text = text.replaceAll("\\s+", " ");
-    return text;
+    Set<Integer> wordIndices = searchIndex.get(key);
+    return wordIndices != null ? wordIndices : new HashSet<>();
   }
 
   public void search(String searchTerm, int mode) {
@@ -111,12 +102,13 @@ public class SearchEngine {
     } else {
       throw new RuntimeException("Unknown search mode: " + mode);
     }
-
     return matchCount;
   }
 
   private int stringSearch(String documentName, String searchTerm) {
     String text = documentMap.get(documentName);
+    text = " " + text + " ";
+    searchTerm = " " + searchTerm + " ";
     int matches = 0;
     for (int start = 0, end = searchTerm.length(); end <= text.length(); start++, end++) {
       if (text.substring(start, end).equals(searchTerm)) {
@@ -135,7 +127,7 @@ public class SearchEngine {
 
   private int indexedSearch(String documentName, String searchTerm) {
     String[] searchTermWords = searchTerm.split(" ", 0);
-    Set<Integer> firstWordIndices = getWordOccurenceIndices(documentName, searchTermWords[0]);
+    Set<Integer> firstWordIndices = getWordIndices(documentName, searchTermWords[0]);
     int matches = 0;
     for (Integer firstWordIndex : firstWordIndices) {
       if (fullMatch(documentName, searchTermWords, firstWordIndex)) {
@@ -145,17 +137,17 @@ public class SearchEngine {
     return matches;
   }
 
-  private boolean fullMatch(String documentName, String[] searchTermWords, int firstWordIndex) {
+  private boolean fullMatch(String documentName, String[] searchTermWords, int startingIndex) {
     for (int i = 1; i < searchTermWords.length; i++) {
-      Set<Integer> curWordIndices = getWordOccurenceIndices(documentName, searchTermWords[i]);
-      if (!curWordIndices.contains(firstWordIndex + i)) {
+      Set<Integer> curWordIndices = getWordIndices(documentName, searchTermWords[i]);
+      if (!curWordIndices.contains(startingIndex + i)) {
         return false;
       }
     }
     return true;
   }
 
-  private void displaySearchResults(Map<String, Integer> matchCounts, long searchTime) {
+  private static void displaySearchResults(Map<String, Integer> matchCounts, long searchTime) {
     StringBuilder results = new StringBuilder();
     results.append("\nSearch Results:\n");
 
@@ -165,6 +157,15 @@ public class SearchEngine {
 
     results.append(String.format("Elapsed time: %d ms", searchTime)).append("\n");
     System.out.println(results.toString());
+  }
+
+  public static String normalizeText(String text) {
+    text = text.toLowerCase();
+    text = text.replaceAll("[’']s", "");
+    text = text.replaceAll("[’']", "");
+    text = text.replaceAll("[^a-z0-9]+", " ");
+    text = text.replaceAll("\\s+", " ");
+    return text;
   }
 
   private Map<String, Integer> getEmptyDocumentMatchCountsMap() {
