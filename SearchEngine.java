@@ -20,6 +20,9 @@ public class SearchEngine {
   private static final int MODE_REGEX   = 2;
   private static final int MODE_INDEXED = 3;
 
+  /*
+   * A map from each document name to its normalized text contents
+   */
   private Map<String, String> documentMap;
   private SearchIndex         searchIndex;
 
@@ -71,6 +74,9 @@ public class SearchEngine {
     }
   }
 
+  /*
+   * Populates matchCounts with the number of matches for each document name
+   */
   private void searchDocuments(Map<String, Integer> matchCounts, String searchTerm, int mode) {
     for (Map.Entry<String, String> document : documentMap.entrySet()) {
       String documentName = document.getKey();
@@ -80,23 +86,24 @@ public class SearchEngine {
   }
 
   private int getDocumentMatchCount(String documentName, String searchTerm, int mode) {
-    int matchCount;
     if (mode == MODE_STRING) {
-      matchCount = stringSearch(documentName, searchTerm);
+      return stringSearch(documentName, searchTerm);
     } else if (mode == MODE_REGEX) {
-      matchCount = regexSearch(documentName, searchTerm);
+      return regexSearch(documentName, searchTerm);
     } else if (mode == MODE_INDEXED) {
-      matchCount = indexedSearch(documentName, searchTerm);
+      return indexedSearch(documentName, searchTerm);
     } else {
       throw new RuntimeException("Unknown search mode: " + mode);
     }
-    return matchCount;
   }
 
   private int stringSearch(String documentName, String searchTerm) {
     String text = documentMap.get(documentName);
+
+    // Add spaces around text and search term to allow matches at the begining and end of file
     text = " " + text + " ";
     searchTerm = " " + searchTerm + " ";
+
     int matches = 0;
     for (int start = 0, end = searchTerm.length(); end <= text.length(); start++, end++) {
       if (text.substring(start, end).equals(searchTerm)) {
@@ -113,6 +120,11 @@ public class SearchEngine {
     return (int) matcher.results().count();
   }
 
+  /*
+   * The search index only stores indices of single words in each document. To handle multi-word
+   * search terms, this method starts by getting the indices for the first word of the search term.
+   * It then iterates over each occurence of the first word and checks for a full match.
+   */
   private int indexedSearch(String documentName, String searchTerm) {
     String[] searchTermWords = searchTerm.split(" ", 0);
     Set<Integer> firstWordIndices = searchIndex.getWordIndices(documentName, searchTermWords[0]);
@@ -147,6 +159,14 @@ public class SearchEngine {
     System.out.println(results.toString());
   }
 
+  /*
+   * This method is used to normalize both search terms, and document contents.
+   * To allow for simple search operations, we convert everything to a string of lowercase
+   * words separated by single spaces. All non-alphanumeric characters are removed.
+   *
+   * We also remove any occurences of 's to allow matching on possesive nouns.
+   * Ex: A search for "day" will still match on occurences of "day's"
+   */
   public static String normalizeText(String text) {
     text = text.toLowerCase();
     text = text.replaceAll("[’']s", "");
