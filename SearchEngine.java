@@ -20,8 +20,8 @@ public class SearchEngine {
   private static final int MODE_REGEX   = 2;
   private static final int MODE_INDEXED = 3;
 
-  private Map<String, String>        documentMap;
-  private Map<String, Set<Integer>>  searchIndex;
+  private Map<String, String> documentMap;
+  private SearchIndex         searchIndex;
 
   public SearchEngine() throws IOException {
     loadDocuments();
@@ -46,33 +46,19 @@ public class SearchEngine {
   }
 
   private void buildSearchIndex() {
-    searchIndex = new HashMap<>();
+    searchIndex = new SearchIndex();
     for (Map.Entry<String, String> document : documentMap.entrySet()) {
       String documentName = document.getKey();
       String[] documentWords = document.getValue().split(" ", 0);
-      addWordsToIndex(documentName, documentWords);
+      searchIndex.addDocument(documentName, documentWords);
     }
-  }
-
-  private void addWordsToIndex(String documentName, String[] words) {
-    for (int i = 0; i < words.length; i++) {
-      String word = words[i];
-      String key = getSearchIndexKey(documentName, word);
-      searchIndex.computeIfAbsent(key, k -> new HashSet<>()).add(i);
-    }
-  }
-
-  private static String getSearchIndexKey(String documentName, String word) {
-    return documentName + "-" + word;
-  }
-
-  private Set<Integer> getWordIndices(String documentName, String word) {
-    String key = getSearchIndexKey(documentName, word);
-    Set<Integer> wordIndices = searchIndex.get(key);
-    return wordIndices != null ? wordIndices : new HashSet<>();
   }
 
   public void search(String searchTerm, int mode) {
+    search(searchTerm, mode, true);
+  }
+
+  public void search(String searchTerm, int mode, boolean displayResults) {
     Map<String, Integer> documentMatchCounts = getEmptyDocumentMatchCountsMap();
 
     Instant start = Instant.now();
@@ -80,7 +66,9 @@ public class SearchEngine {
     Instant finish = Instant.now();
 
     long searchTime = Duration.between(start, finish).toMillis();
-    displaySearchResults(documentMatchCounts, searchTime);
+    if (displayResults) {
+      displaySearchResults(documentMatchCounts, searchTime);
+    }
   }
 
   private void searchDocuments(Map<String, Integer> matchCounts, String searchTerm, int mode) {
@@ -127,7 +115,7 @@ public class SearchEngine {
 
   private int indexedSearch(String documentName, String searchTerm) {
     String[] searchTermWords = searchTerm.split(" ", 0);
-    Set<Integer> firstWordIndices = getWordIndices(documentName, searchTermWords[0]);
+    Set<Integer> firstWordIndices = searchIndex.getWordIndices(documentName, searchTermWords[0]);
     int matches = 0;
     for (Integer firstWordIndex : firstWordIndices) {
       if (fullMatch(documentName, searchTermWords, firstWordIndex)) {
@@ -139,7 +127,7 @@ public class SearchEngine {
 
   private boolean fullMatch(String documentName, String[] searchTermWords, int startingIndex) {
     for (int i = 1; i < searchTermWords.length; i++) {
-      Set<Integer> curWordIndices = getWordIndices(documentName, searchTermWords[i]);
+      Set<Integer> curWordIndices = searchIndex.getWordIndices(documentName, searchTermWords[i]);
       if (!curWordIndices.contains(startingIndex + i)) {
         return false;
       }

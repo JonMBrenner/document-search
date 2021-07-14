@@ -2,6 +2,9 @@ import java.util.Scanner;
 import java.util.Set;
 import java.io.IOException;
 
+/*
+ * DocumentSearch acts as a command line interface for using the search engine.
+ */
 public class DocumentSearch {
 
   private static final Set<String> VALID_MODES = Set.of("1", "2", "3");
