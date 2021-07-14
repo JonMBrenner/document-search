@@ -23,8 +23,8 @@ public class SearchEngine {
   /*
    * A map from each document name to its normalized text contents
    */
-  private Map<String, String> documentMap;
-  private SearchIndex         searchIndex;
+  private Map<String, String> documentMap = new HashMap<>();
+  private SearchIndex         searchIndex = new SearchIndex();
 
   public SearchEngine() throws IOException {
     loadDocuments();
@@ -32,7 +32,6 @@ public class SearchEngine {
   }
 
   private void loadDocuments() throws IOException {
-    documentMap = new HashMap<>();
     try (Stream<Path> docPaths = Files.walk(Paths.get("./documents/"))) {
       docPaths.filter(Files::isRegularFile).forEach(this::loadDocument);
     }
@@ -49,7 +48,6 @@ public class SearchEngine {
   }
 
   private void buildSearchIndex() {
-    searchIndex = new SearchIndex();
     for (Map.Entry<String, String> document : documentMap.entrySet()) {
       String documentName = document.getKey();
       String[] documentWords = document.getValue().split(" ", 0);
@@ -57,11 +55,11 @@ public class SearchEngine {
     }
   }
 
-  public void search(String searchTerm, int mode) {
-    search(searchTerm, mode, true);
+  public Map<String, Integer> search(String searchTerm, int mode) {
+    return search(searchTerm, mode, true);
   }
 
-  public void search(String searchTerm, int mode, boolean displayResults) {
+  public Map<String, Integer> search(String searchTerm, int mode, boolean displayResults) {
     Map<String, Integer> documentMatchCounts = getEmptyDocumentMatchCountsMap();
 
     Instant start = Instant.now();
@@ -72,6 +70,8 @@ public class SearchEngine {
     if (displayResults) {
       displaySearchResults(documentMatchCounts, searchTime);
     }
+
+    return documentMatchCounts;
   }
 
   /*
