@@ -28,3 +28,44 @@ Key - A unique string for each combination of document & word<br>
 Value - A set of integers that denote all indices the the word occurs in the document<br>
 <br>
 This allows for O(1) lookup on each document, or O(n) where n is the number of documents. Mapping the indices rather than just the counts also allows us to handle multi-word search terms, since we can check that certain words appear in order in a given document.
+
+## Performance Test
+Below is the output for my performance test of 2M random search terms:<br>
+Search Mode: 1 - 202022 ms<br>
+Search Mode: 2 - 233430 ms<br>
+Search Mode: 3 - 4340 ms<br><br>
+As you can see, the string search and regex search are comparable, but indexed search takes the lead by far. This is because rather than parsing through all the documents everytime for each search, we preprocess everything so we can perform instant lookups for certain words in the documents. We are essentially getting all the work done up front rather than doing it over and over for each search request.
+
+## Thoughts on Scaling
+Obviously this is a small sample project, and would not work on a large scale. For a scalable solution, we would want to use some form of the indexed search given its performance. We would also need to offload the search index to a database rather than storing it in main memory. Also, I think it'd be worth exploring other ways to structure the data. Rather than checking all documents for a certain term, we could also keep a map from terms do documents. That way we could first get the list of documents that contain a certain term, then use our existing structure to go over those documents and sort by relevance.<br>To handle large request volume, we could also build a cache of results for common search terms to prevent continuously performing the same operation.
+
+## Sample Run
+Enter search term: star trek<br>
+Enter search method (1-String Match 2-Regex 3-Indexed): 3<br>
+<br>
+Search Results:<br>
+	warp_drive.txt - 1<br>
+	hitchhikers.txt - 0<br>
+	french_armed_forces.txt - 0<br>
+Elapsed time: 0 ms<br>
+<br>
+Would you like to enter another search term? (y/n): y<br>
+Enter search term: in the<br>
+Enter search method (1-String Match 2-Regex 3-Indexed): 3<br>
+<br>
+Search Results:<br>
+	french_armed_forces.txt - 15<br>
+	hitchhikers.txt - 2<br>
+	warp_drive.txt - 1<br>
+Elapsed time: 0 ms<br>
+<br>
+Would you like to enter another search term? (y/n): y<br>
+Enter search term: france<br>
+Enter search method (1-String Match 2-Regex 3-Indexed): 2<br>
+<br>
+Search Results:<br>
+	french_armed_forces.txt - 18<br>
+	hitchhikers.txt - 0<br>
+	warp_drive.txt - 0<br>
+Elapsed time: 21 ms<br>
+
