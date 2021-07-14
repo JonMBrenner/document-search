@@ -3,14 +3,20 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 
+/*
+ * This class maintains a map where each key is a unique identifer for a given
+ * document & word combination, and the value is a set of the indices that particular
+ * word appears in the document.
+ */
 public class SearchIndex {
   
-  private Map<String, Set<Integer>> documentWordIndices;
+  private Map<String, Set<Integer>> documentWordIndices = new HashMap<>();
 
-  public SearchIndex() {
-    documentWordIndices = new HashMap<>();
-  }
-
+  /*
+   * Since we can assume document names are unique, simply joining the name and word
+   * with a dash will guarantee uniqueness. Although, in a larger system we would likely use
+   * some kind of document ID.
+   */
   private static String getDocumentWordKey(String documentName, String word) {
     return documentName + "-" + word;
   }
