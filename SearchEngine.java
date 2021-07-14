@@ -62,6 +62,9 @@ public class SearchEngine {
   public Map<String, Integer> search(String searchTerm, int mode, boolean displayResults) {
     searchTerm = normalizeText(searchTerm);
     Map<String, Integer> documentMatchCounts = getEmptyDocumentMatchCountsMap();
+    if ("".equals(searchTerm) || " ".equals(searchTerm)) {
+      return documentMatchCounts;
+    }
 
     Instant start = Instant.now();
     searchDocuments(documentMatchCounts, searchTerm, mode);
